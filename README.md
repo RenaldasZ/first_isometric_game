@@ -7,12 +7,27 @@
 ```
 - python -m venv venv
 - venv\scripts\activate
-- pip freeze >requirements.txt
+
+- pip install pygame-ce
+- pip install litestar[standard]
+- pip install websocket-client
+
+or:
+
+- pip install requirements.txt
+
+
+run server:
+uvicorn server:app --reload
+
+run client:
+python main.py
 ```
 
 Updates:
 
-...
+- Class based WebSocket handling
+- Litestar implementation
 
 Screenshots:
 
