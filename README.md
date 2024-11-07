@@ -28,7 +28,8 @@ Updates:
 
 1. *Litestar implementation: Class based WebSocket handling*
 1. *Server side: detailed docstrings added to server.py*
-
+1. *Removed unneseccary annotations in server side for clarity*
+1. *Encapsulated WebSocket event handlers with improvements*
 
 Screenshots:
 
