@@ -5,6 +5,9 @@ import threading
 import queue
 import json
 import time
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 pygame.init()
 
@@ -18,6 +21,7 @@ TILE_WIDTH, TILE_HEIGHT = 256, 128
 BACKGROUND_COLOR = (0, 128, 128)
 TILE_COLOR = (153, 101, 21)
 PLAYER_TILE_COLOR = (255, 0, 0)
+OTHER_PLAYER_TILE_COLOR = (0, 0, 255)
 GRID_COLOR = (0, 0, 0)
 
 # Function to convert cartesian coordinates to isometric
@@ -54,6 +58,7 @@ class Game:
         self.ws = None
         self.is_connected = False
         self.player_pos = [5, 5]
+        self.other_players = {}
         self.connection_status = "Disconnected"
         self.message_queue = queue.Queue()
         self.ws_thread = threading.Thread(target=self.run_websocket, daemon=True)
@@ -70,41 +75,53 @@ class Game:
 
     def on_message(self, ws, message):
         self.message_queue.put(f"Message: {message}")
+        try:
+            if message.strip():  
+                data = json.loads(message)
+                if "id" in data and "position" in data:
+                    self.other_players[data["id"]] = data["position"]
+            else:
+                logging.warning("Received an empty message from the server.")
+        except json.JSONDecodeError as e:
+            logging.error(f"Failed to parse JSON message: {e}")
 
     def reconnect(self):
         while not self.is_connected:
             try:
-                self.ws = websocket.WebSocketApp("ws://127.0.0.1:8000/", on_open=self.on_open, on_close=self.on_close, on_message=self.on_message)
+                logging.debug("Trying to reconnect...")
+                self.ws = websocket.WebSocketApp(
+                    "ws://127.0.0.1:8000/",
+                    on_open=self.on_open,
+                    on_close=self.on_close,
+                    on_message=self.on_message
+                )
                 self.ws.run_forever()
-                if self.is_connected:
-                    print("Reconnected successfully")
             except Exception as e:
-                print(f"Reconnection failed: {e}")
-                time.sleep(1)
+                logging.error(f"Reconnection failed: {e}")
+                time.sleep(2)
 
     def run_websocket(self):
-        self.reconnect()  # Start connection with auto-reconnect enabled
+        self.reconnect()
 
     def send_player_position(self):
         if self.is_connected:
             try:
-                self.ws.send(json.dumps(self.player_pos))
+                data = json.dumps({"position": self.player_pos})
+                self.ws.send(data)
             except websocket.WebSocketConnectionClosedException:
                 print("Failed to send position: WebSocket connection closed")
         else:
             print("Cannot send position: Not connected to server")
 
-# Create an instance of the Game class
-game = Game()
-
 # Main loop
+game = Game()
 clock = pygame.time.Clock()
 grid_width, grid_height = 20, 20
 font = pygame.font.Font(None, 36)
 
 try:
     while True:
-        # Handle queued WebSocket messages for thread safety
+        # # Process WebSocket messages
         while not game.message_queue.empty():
             msg = game.message_queue.get()
             if "Connected" in msg:
@@ -112,7 +129,7 @@ try:
             elif "Disconnected" in msg:
                 game.connection_status = "Disconnected"
             else:
-                print(msg)  # Handle game-related messages here
+                print(msg)
 
         screen.fill(BACKGROUND_COLOR)
 
@@ -125,46 +142,34 @@ try:
                 iso_x, iso_y = cart_to_iso(col, row)
                 if (game.player_pos[0], game.player_pos[1]) == (col, row):
                     draw_tile(screen, iso_x + offset_x, iso_y + offset_y, PLAYER_TILE_COLOR)
+                elif any((p[0], p[1]) == (col, row) for p in game.other_players.values()):
+                    draw_tile(screen, iso_x + offset_x, iso_y + offset_y, OTHER_PLAYER_TILE_COLOR)
                 else:
                     draw_tile(screen, iso_x + offset_x, iso_y + offset_y, TILE_COLOR)
 
         draw_grid(screen, grid_width, grid_height, offset_x, offset_y)
 
-        # Display connection status
+        # Connection status display
         status_text = font.render(f"Status: {game.connection_status}", True, (255, 255, 255))
         screen.blit(status_text, (10, 10))
 
-        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        # Key handling for movement
+        # Movement controls
         keys = pygame.key.get_pressed()
-        direction = None
-        moved = False
         if keys[pygame.K_UP] and game.player_pos[1] > 0:
             game.player_pos[1] -= 1
-            direction = "up"
-            moved = True
         if keys[pygame.K_DOWN] and game.player_pos[1] < grid_height - 1:
             game.player_pos[1] += 1
-            direction = "down"
-            moved = True
         if keys[pygame.K_LEFT] and game.player_pos[0] > 0:
             game.player_pos[0] -= 1
-            direction = "left"
-            moved = True
         if keys[pygame.K_RIGHT] and game.player_pos[0] < grid_width - 1:
             game.player_pos[0] += 1
-            direction = "right"
-            moved = True
 
-        if moved:
-            print(direction)
-            game.send_player_position()
-
+        game.send_player_position()
         pygame.display.flip()
         clock.tick(30)
 
