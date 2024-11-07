@@ -26,9 +26,11 @@ python main.py
 
 Updates:
 
-- Class based WebSocket handling
-- Litestar implementation
+1. *Litestar implementation: Class based WebSocket handling*
+1. *Server side: detailed docstrings added to server.py*
+
 
 Screenshots:
 
 ![alt text](images/v1.png)
+![alt text](images/v2.png)
