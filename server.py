@@ -17,7 +17,7 @@ class Handler(WebsocketListener):
         client_id = next((cid for cid, info in connected_clients.items() if info["socket"] == socket), None)
         if client_id:
             del connected_clients[client_id]
-            await self.broadcast_message(json.dumps({"message": f"Player {client_id} disconnected"}))
+            await self.broadcast_message(json.dumps({"id": client_id, "disconnected": True}))
 
     async def on_receive(self, socket: WebSocket, data: str) -> None:
         client_id = next((cid for cid, info in connected_clients.items() if info["socket"] == socket), None)

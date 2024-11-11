@@ -78,7 +78,11 @@ class Game:
         try:
             if message.strip():  
                 data = json.loads(message)
-                if "id" in data and "position" in data:
+                if data.get("disconnected"):
+                    player_id = data["id"]
+                    if player_id in self.other_players:
+                        del self.other_players[player_id]
+                elif "id" in data and "position" in data:
                     self.other_players[data["id"]] = data["position"]
             else:
                 logging.warning("Received an empty message from the server.")
