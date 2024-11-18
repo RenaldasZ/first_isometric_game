@@ -31,9 +31,11 @@ Updates:
 1. *Removed unneseccary annotations in server side for clarity*
 1. *Encapsulated WebSocket event handlers with improvements*
 1. *Server is running* 
+1. *Created and added 3d player visuals using Blender3D*
 
 Screenshots:
 
 ![alt text](images/v1.png)
 ![alt text](images/v2.png)
 ![alt text](images/v3.png)
+![alt text](images/v4.png)
