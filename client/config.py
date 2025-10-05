@@ -1,0 +1,19 @@
+# client/config.py
+# Client-side configuration (screen sizes, colors, grid)
+SCREEN_WIDTH = 1800
+SCREEN_HEIGHT = 900
+
+BACKGROUND_COLOR = (0, 128, 128)
+TILE_COLOR = (153, 101, 21)
+PLAYER_TILE_COLOR = (255, 0, 0)
+OTHER_PLAYER_TILE_COLOR = (0, 0, 255)
+
+GRID_WIDTH = 40
+GRID_HEIGHT = 40
+
+TILE_WIDTH = 256
+TILE_HEIGHT = 128
+
+ANIM_IMG_SIZE = (200, 200)
+
+FPS = 30
